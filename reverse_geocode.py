@@ -29,7 +29,7 @@ def reverse_geocode(base_url=None,query_params=None,k = 1,num_cpus=1,print_lim=2
     
     counter = 0
     print(lat_long.shape)
-    for i,row in lat_long.iloc[6000:,:].iterrows():
+    for i,row in lat_long.iloc[:,:].iterrows():
         counter+=1
         
         if start is None:
@@ -41,8 +41,9 @@ def reverse_geocode(base_url=None,query_params=None,k = 1,num_cpus=1,print_lim=2
         if np.isnan(row[0]) or np.isnan(row[1]):
             
             continue
-        url = base_url + "lon=" + str(row[1]) + "&lat=" + str(row[0]) + query_params
-        print(url)
+        #url = base_url + "point.lon=" + str(row[1]) + "&point.lat=" + str(row[0]) + query_params
+        url = base_url + str(row[0]) + "," + str(row[1]) + query_params
+        #print(url)
         
         res = requests.request('GET',url).json()
         #print(res)
@@ -65,19 +66,23 @@ def reverse_geocode(base_url=None,query_params=None,k = 1,num_cpus=1,print_lim=2
             latitude = []
             longitude = []
             
-        features = res['features']
+        features = res['results']
         
         postal_code = None
         
         for feature in features:
-            if 'postcode' in feature['properties']:
-                postal_code = feature['properties']['postcode']
-                break
+            address = feature["address_components"]
+            
+            for info in address:
+                if len(info["types"])==1 and info["types"][0] == "postal_code":
+                    
+                    postal_code = info["long_name"]
         
         
     
         if postal_code is None:
             #not_present[i] = 1
+            print(url)
             print("postcode not present for i = {} on cpu {}".format(i,k))
             continue
 
